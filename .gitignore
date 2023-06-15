@@ -13,3 +13,7 @@ bin
 coverage
 docs
 *.logs
+
+# Secrets
+.env
+.secrets

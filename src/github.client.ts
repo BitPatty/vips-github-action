@@ -14,7 +14,7 @@ export class GitHubClient {
   readonly #commitMessage: string = 'compress images';
 
   public constructor() {
-    const token = getInput('gh-token', { required: true });
+    const token = getInput('github-token', { required: true });
     this.#internalClient = getOctokit(token);
 
     const commitMessage = getInput('commit-message', { required: false });
@@ -99,6 +99,7 @@ export class GitHubClient {
       repo: context.repo.repo,
       ref: sha,
     });
+    console.log(commit.data.files);
     if (!commit.data.files) return [];
     return this.#resolveRepoPaths(commit.data.files, includeUnchanged);
   }
