@@ -1,0 +1,13 @@
+name: 'VIPS'
+description: 'Compress and optimize images in your repository'
+author: 'bitpatty'
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '20.2.0'
+    - run: npm install
+    - run: npm run lint
+    - run: npm run build
+    - run: node dist/index.js

@@ -1,0 +1,12 @@
+---
+name: Test Action
+
+on: push
+
+jobs:
+  test-action:
+    if: github.repository_owner == 'bitpatty'
+    name: Test Action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
