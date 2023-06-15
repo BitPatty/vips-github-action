@@ -11,7 +11,7 @@ runs:
     - uses: actions/setup-node@v3
       with:
         node-version: '20.2.0'
+    - run: sudo apt-get update && apt install -y libvips-tools
     - run: npm install
-    - run: npm run lint
     - run: npm run build
     - run: node dist/index.js

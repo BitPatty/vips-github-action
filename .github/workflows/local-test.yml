@@ -1,12 +1,10 @@
 ---
-name: Test Action
-
-on: push
+name: Local Test
 
 jobs:
-  test-action:
+  local-test:
     if: github.repository_owner == 'bitpatty'
-    name: Test Action
+    name: Local Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
