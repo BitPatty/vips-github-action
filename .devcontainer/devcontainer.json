@@ -1,5 +1,5 @@
 {
-    "name": "ts-library-template",
+    "name": "vips-github-action",
     "dockerComposeFile": "docker-compose.yml",
     "service": "application",
     "workspaceFolder": "/workspace",
