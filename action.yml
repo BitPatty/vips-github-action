@@ -21,4 +21,8 @@ runs:
     - run: cd ${{ github.action_path }} && npm run build
       shell: bash
     - run: cd ${{ github.action_path }} && node ./dist/index.js
+      env:
+        INPUT_TOKEN: ${{ inputs.token }}
+        INPUT_COMMIT-MESSAGE: ${{ inputs.commit-message }}
+        INPUT_FILE-ENDINGS: ${{ inputs.file-endings }}
       shell: bash
