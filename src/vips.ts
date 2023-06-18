@@ -73,6 +73,8 @@ export class VIPS {
           `--compression=${config.pngCompressionLevel}`,
           `--Q=${config.quality}`,
           config.stripMetadata ? '--strip=1' : '',
+          '--interlace=true',
+          '--palette=true',
         ].join(' ');
       case '.jpeg':
       case '.jpg':
