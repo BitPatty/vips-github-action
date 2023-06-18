@@ -39,7 +39,6 @@
     ],
     "@typescript-eslint/no-shadow": ["error"],
     "@typescript-eslint/switch-exhaustiveness-check": "error",
-    "no-console": ["error"],
     "no-return-await": ["error"],
     "require-await": ["error"],
     "padding-line-between-statements": [

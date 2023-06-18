@@ -1,0 +1,13 @@
+---
+name: Local Test
+
+jobs:
+  local-test:
+    if: github.repository_owner == 'bitpatty'
+    name: Local Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

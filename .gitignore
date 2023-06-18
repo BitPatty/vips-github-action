@@ -6,9 +6,15 @@ node_modules
 
 # Build
 dist
+bin
 
 # Generated
 .cache
 coverage
 docs
 *.logs
+*.log
+
+# Secrets
+.env
+.secrets
