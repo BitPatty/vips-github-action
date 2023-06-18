@@ -7,10 +7,18 @@ const vips = new VIPS();
 
 const runAction = async (): Promise<void> => {
   const images = await ghClient.listAllImageFiles();
+
   if (images.length === 0) {
     console.log('No images found');
     return;
   }
+
+  const compressedImages: {
+    sizeBefore: number;
+    sizeAfter: number;
+    repoPath: string;
+    localPath: string;
+  }[] = [];
 
   for (const image of images) {
     console.log(`Compressing ${image.repoPath}`);
@@ -19,16 +27,28 @@ const runAction = async (): Promise<void> => {
       ghClient.processingOptions,
     );
 
-    const [beforeStat, afterStat] = await Promise.all([
+    const [{ size: sizeBefore }, { size: sizeAfter }] = await Promise.all([
       FS.getFileStats(image.localPath),
       FS.getFileStats(compressedImagePath),
     ]);
 
     console.log({
-      beforeStat,
-      afterStat,
+      ...image,
+      sizeBefore,
+      sizeAfter,
+    });
+
+    if (sizeBefore <= sizeAfter) continue;
+    compressedImages.push({
+      repoPath: image.repoPath,
+      localPath: compressedImagePath,
+      sizeBefore,
+      sizeAfter,
     });
   }
+
+  await ghClient.createCommit(compressedImages);
+  await ghClient.upsertPullRequest(compressedImages);
 };
 
 void runAction();

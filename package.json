@@ -1,7 +1,7 @@
 {
   "name": "@bitpatty/vips-github-action",
   "version": "0.0.1",
-  "description": "Template repository for my typescript libraries",
+  "description": "A GitHub action for compressing images",
   "author": "Matteias Collet <matteias.collet@pm.me>",
   "type": "module",
   "module": "dist/esm/index.js",
@@ -12,7 +12,8 @@
     "deps:force-upgrade": "npm-check-updates -u && rm -rf node_modules && rm -f package-lock.json && npm i",
     "format": "prettier --write \"{src,test}/**/*.ts\" ",
     "lint": "eslint --fix \"{test,src}/**/*.{js,ts}\"",
-    "test": "jest --verbose --runInBand --coverage"
+    "test": "jest --verbose --runInBand --coverage",
+    "act": "./bin/act -j local-test  --secret-file .secrets "
   },
   "repository": {
     "type": "git",

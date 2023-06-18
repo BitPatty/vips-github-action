@@ -5,6 +5,7 @@ import { FS } from './fs.js';
 type VIPSConfig = {
   quality: number;
   stripMetadata: boolean;
+  pngCompressionLevel: number;
 };
 
 type SupportedExtension = `.${'png' | 'jpeg' | 'jpg'}`;
@@ -68,7 +69,7 @@ export class VIPS {
           'pngsave',
           this.#placeholderIn,
           this.#placeholderOut,
-          '--compression=9',
+          `--compression=${config.pngCompressionLevel}`,
           `--Q=${config.quality}`,
           config.stripMetadata ? '--strip=1' : '',
         ].join(' ');

@@ -57,20 +57,83 @@ export class GitHubClient {
     quality: number;
     stripMetadata: boolean;
     threshold: number;
+    pngCompressionLevel: number;
+    branch: string;
   } {
     return {
       quality: 1,
       stripMetadata: true,
       threshold: 0,
+      pngCompressionLevel: 9,
+      branch: 'vips',
     };
+  }
+
+  /**
+   * Upserts the pull request to merge the compressed images
+   *
+   * @param imageData  The image data
+   */
+  public async upsertPullRequest(
+    imageData: Array<ImageFile & { sizeBefore: number; sizeAfter: number }>,
+  ): Promise<void> {
+    const defaultBranch = await this.#getDefaultBranch({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+    });
+
+    const prText = this.#buildPRText(imageData);
+
+    const existingPRs = await this.#internalClient.rest.pulls.list({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      state: 'open',
+      base: defaultBranch,
+      head: this.processingOptions.branch,
+    });
+
+    const matchingPR = existingPRs.data.find(
+      (d) =>
+        d.head.repo.owner.login === context.repo.owner &&
+        d.head.repo.name === context.repo.repo &&
+        d.head.ref === this.processingOptions.branch,
+    );
+
+    if (matchingPR) {
+      console.log(`Updating Pull Request #${matchingPR.number}`);
+      await this.#internalClient.rest.pulls.update({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        pull_number: matchingPR.number,
+        body: prText,
+        title: 'Compress Images',
+      });
+    } else {
+      console.log(`Opening Pull Request`);
+      await this.#internalClient.rest.pulls.create({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        pull_number: existingPRs.data[0].number,
+        body: prText,
+        base: defaultBranch,
+        head: this.processingOptions.branch,
+        title: 'Compress Images',
+      });
+    }
   }
 
   /**
    * Creates a new commit
    *
    * @param images  The image paths
+   * @param branch  The branch to publish the changes to
    */
-  public async createCommit(images: ImageFile[]): Promise<void> {
+  public async createCommit(
+    images: ImageFile[],
+  ): Promise<{ ref: string; sha: string }> {
+    const head = `heads/${this.processingOptions.branch}`;
+    const ref = `refs/${head}`;
+
     const imageBlobs: {
       path: string;
       type: 'blob';
@@ -102,7 +165,7 @@ export class GitHubClient {
       owner: context.repo.owner,
       repo: context.repo.repo,
       base_tree: context.sha,
-      tree: [],
+      tree: imageBlobs,
     });
 
     const commit = await this.#internalClient.rest.git.createCommit({
@@ -113,12 +176,26 @@ export class GitHubClient {
       message: this.#commitMessage,
     });
 
-    await this.#internalClient.rest.git.updateRef({
+    const refs = await this.#internalClient.rest.git.listMatchingRefs({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      ref: `heads/${context.ref}`,
-      sha: commit.data.sha,
+      ref: head,
     });
+
+    const res = await this.#internalClient.rest.git[
+      refs.data.some((r) => r.ref === ref) ? 'updateRef' : 'createRef'
+    ]({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      ref: head,
+      sha: commit.data.sha,
+      force: true,
+    });
+
+    return {
+      ref: res.data.ref,
+      sha: res.data.object.sha,
+    };
   }
 
   /**
@@ -126,8 +203,17 @@ export class GitHubClient {
    *
    * @returns  The image files
    */
-  public listAllImageFiles(): Promise<ImageFile[]> {
-    return this.#listCommitImageFiles(context.sha, true);
+  public async listAllImageFiles(): Promise<ImageFile[]> {
+    const tree = await this.#internalClient.rest.git.getTree({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      tree_sha: context.sha,
+      recursive: 'true',
+    });
+
+    return this.#resolveImageFilePaths(
+      tree.data.tree.map((t) => ({ filename: t.path ?? 'N/A' })),
+    );
   }
 
   /**
@@ -158,8 +244,55 @@ export class GitHubClient {
       repo: context.repo.repo,
       ref: sha,
     });
+
     if (!commit.data.files) return [];
-    return this.#resolveImageFilePaths(commit.data.files, includeUnchanged);
+
+    return this.#resolveImageFilePaths(
+      commit.data.files.filter((c) =>
+        includeUnchanged
+          ? c.status !== 'removed'
+          : c.status === 'added' || c.status === 'changed',
+      ),
+    );
+  }
+
+  /**
+   * Gets the default branch for the specified repository
+   *
+   * @param repo  The repository
+   * @returns     The default branch name
+   */
+  async #getDefaultBranch(repo: {
+    owner: string;
+    repo: string;
+  }): Promise<string> {
+    const r = await this.#internalClient.rest.repos.get(repo);
+    return r.data.default_branch;
+  }
+
+  /**
+   * Builds the text for the pull request body
+   *
+   * @param imageData  The context for the compressed files
+   * @returns          The body content
+   */
+  #buildPRText(
+    imageData: Array<ImageFile & { sizeBefore: number; sizeAfter: number }>,
+  ): string {
+    return [
+      `Compressed Images:`,
+      `| Path | Previous Size (KB) | New Size (KB) | Diff |`,
+      `| --- | --- | --- | --- |`,
+      ...imageData.map(
+        (d) =>
+          `| \`${d.repoPath}\` | \`${d.sizeBefore}\` | \`${
+            d.sizeAfter
+          }\` | \`-${(
+            (100 * (d.sizeBefore - d.sizeAfter)) /
+            d.sizeBefore
+          ).toFixed(2)}%\``,
+      ),
+    ].join('\n');
   }
 
   /**
@@ -175,7 +308,9 @@ export class GitHubClient {
       pull_number: prNumber,
     });
 
-    return this.#resolveImageFilePaths(pr.data);
+    return this.#resolveImageFilePaths(
+      pr.data.filter((c) => c.status === 'added' || c.status === 'changed'),
+    );
   }
 
   /**
@@ -196,19 +331,11 @@ export class GitHubClient {
    * Resolves the file paths of the specified commit changes
    *
    * @param changes           The commit changes
-   * @param includeUnchanged  Whether to include unchanged image files
    * @returns                 The image files
    */
-  #resolveImageFilePaths(
-    changes: { status: 'added' | 'changed' | string; filename: string }[],
-    includeUnchanged = false,
-  ): ImageFile[] {
+  #resolveImageFilePaths(changes: { filename: string }[]): ImageFile[] {
     return changes
-      .filter((c) =>
-        includeUnchanged
-          ? c.status !== 'removed'
-          : c.status === 'added' || c.status === 'changed',
-      )
+
       .filter((c) => this.#isImageFile(c.filename))
       .map((c) => c.filename)
       .map((f) => ({
