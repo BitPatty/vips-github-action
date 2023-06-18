@@ -284,7 +284,7 @@ export class GitHubClient {
   ): string {
     return [
       `Compressed Images:`,
-      `| Path | Previous Size (KB) | New Size (KB) | Diff |`,
+      `| Path | Previous Size | New Size | Diff |`,
       `| --- | --- | --- | --- |`,
       ...imageData.map(
         (d) =>
