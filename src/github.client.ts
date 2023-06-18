@@ -115,7 +115,6 @@ export class GitHubClient {
       await this.#internalClient.rest.pulls.create({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        pull_number: existingPRs.data[0].number,
         body: prText,
         base: defaultBranch,
         head: this.processingOptions.branch,
