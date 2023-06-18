@@ -12,10 +12,14 @@ runs:
       with:
         node-version: '20.2.0'
     - run: sudo apt-get update && sudo apt install -y libvips-tools
+      working-directory: ${{ env.GITHUB_ACTION_PATH }}
       shell: bash
     - run: npm install
+      working-directory: ${{ env.GITHUB_ACTION_PATH }}
       shell: bash
     - run: npm run build
+      working-directory: ${{ env.GITHUB_ACTION_PATH }}
       shell: bash
     - run: node dist/index.js
+      working-directory: ${{ env.GITHUB_ACTION_PATH }}
       shell: bash
