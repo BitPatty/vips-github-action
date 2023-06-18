@@ -17,5 +17,5 @@ runs:
       shell: bash
     - run: cd ${{ github.action_path }} && npm run build
       shell: bash
-    - run: cd ${{ github.action_path }} && node dist/index.js
+    - run: node ${{ github.action_path }}/dist/index.js
       shell: bash
