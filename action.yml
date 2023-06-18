@@ -12,6 +12,7 @@ runs:
     - uses: actions/setup-node@v3
       with:
         node-version: '20.2.0'
+    - run: echo ${{ inputs.token }}
     - run: sudo apt-get update && sudo apt install -y libvips-tools
       shell: bash
     - run: cd ${{ github.action_path }} && npm install
