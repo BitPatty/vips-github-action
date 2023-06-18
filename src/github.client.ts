@@ -59,12 +59,14 @@ export class GitHubClient {
     threshold: number;
     pngCompressionLevel: number;
     branch: string;
+    jpegProgressive: boolean;
   } {
     return {
-      quality: 1,
+      quality: 80,
       stripMetadata: true,
       threshold: 0,
       pngCompressionLevel: 9,
+      jpegProgressive: true,
       branch: 'vips',
     };
   }

@@ -6,6 +6,7 @@ type VIPSConfig = {
   quality: number;
   stripMetadata: boolean;
   pngCompressionLevel: number;
+  jpegProgressive: boolean;
 };
 
 type SupportedExtension = `.${'png' | 'jpeg' | 'jpg'}`;
@@ -80,6 +81,7 @@ export class VIPS {
           this.#placeholderIn,
           this.#placeholderOut,
           `--Q=${config.quality}`,
+          config.jpegProgressive ? '--interlace=1' : '',
           config.stripMetadata ? '--strip=1' : '',
         ].join(' ');
       default:
