@@ -32,7 +32,7 @@ export class GitHubClient {
   readonly #workspace = process.env.GITHUB_WORKSPACE as string;
 
   public constructor() {
-    const token = getInput('github-token', { required: true });
+    const token = getInput('token', { required: true });
     this.#internalClient = getOctokit(token);
 
     // Set the commit message
