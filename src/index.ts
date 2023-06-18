@@ -39,6 +39,8 @@ const runAction = async (): Promise<void> => {
     });
 
     if (sizeBefore <= sizeAfter) continue;
+    if (sizeBefore - sizeAfter < ghClient.processingOptions.threshold) continue;
+
     compressedImages.push({
       repoPath: image.repoPath,
       localPath: compressedImagePath,

@@ -64,7 +64,7 @@ export class GitHubClient {
     return {
       quality: 80,
       stripMetadata: true,
-      threshold: 0,
+      threshold: 10000,
       pngCompressionLevel: 9,
       jpegProgressive: true,
       branch: 'vips',
