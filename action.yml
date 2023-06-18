@@ -12,6 +12,10 @@ runs:
       with:
         node-version: '20.2.0'
     - run: sudo apt-get update && apt install -y libvips-tools
+      shell: bash
     - run: npm install
+      shell: bash
     - run: npm run build
+      shell: bash
     - run: node dist/index.js
+      shell: bash
