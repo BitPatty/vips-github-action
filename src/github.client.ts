@@ -184,12 +184,14 @@ export class GitHubClient {
       ref: head,
     });
 
+    const refExists = refs.data.some((r) => r.ref === ref);
+
     const res = await this.#internalClient.rest.git[
-      refs.data.some((r) => r.ref === ref) ? 'updateRef' : 'createRef'
+      refExists ? 'updateRef' : 'createRef'
     ]({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      ref: head,
+      ref: refExists ? head : ref,
       sha: commit.data.sha,
       force: true,
     });
