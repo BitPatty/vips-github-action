@@ -74,7 +74,14 @@ export class VIPS {
           config.stripMetadata ? '--strip=1' : '',
         ].join(' ');
       case '.jpeg':
-        return '';
+      case '.jpg':
+        return [
+          'jpegsave',
+          this.#placeholderIn,
+          this.#placeholderOut,
+          `--Q=${config.quality}`,
+          config.stripMetadata ? '--strip=1' : '',
+        ].join(' ');
       default:
         throw new Error(`Unsupported format: ${normalizedExtension}`);
     }
